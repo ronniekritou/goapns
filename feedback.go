@@ -1,26 +1,24 @@
 package apns
 
 import (
-	"encoding/hex"
-	"encoding/binary"
-	"errors"
-	"bytes"
-	"time"
-	"log"
-	"io"
 	"bufio"
+	"bytes"
+	"encoding/binary"
+	"encoding/hex"
+	"errors"
+	"io"
+	"log"
+	"time"
 )
-
 
 const APPLE_FEEDBACK string = "feedback.push.apple.com:2196"
 const APPLE_FEEDBACK_SANDBOX string = "feedback.sandbox.push.apple.com:2196"
 
 // NewFeedbackClient create a client for apple's Feedback system
-//  
-func NewFeedbackClient(endpoint, certificate, key string) (*ApnsConn, error) {
+//
+func NewFeedbackClient(endpoint, certificate, key string) (*Conn, error) {
 	return NewClient(endpoint, certificate, key)
 }
-
 
 type ApnsFeedbackMessage struct {
 	Time_t      int32
@@ -57,10 +55,10 @@ func parseAppleFeedbackMessage(readb []byte) (*ApnsFeedbackMessage, error) {
 	return msg, nil
 }
 
-// StartListening listens on a apple Feedback connection and produces an ApnsFeedbackMessage 
+// StartListening listens on a apple Feedback connection and produces an ApnsFeedbackMessage
 // each time a valid message is found
 // If EOF is received the goroutine will try to re-connect 3 times waiting 5, 10 and 15 seconds
-func (client *ApnsConn) StartListening() <-chan *ApnsFeedbackMessage {
+func (client *Conn) StartListening() <-chan *ApnsFeedbackMessage {
 	outChan := make(chan *ApnsFeedbackMessage)
 
 	err := client.connect()
@@ -87,14 +85,11 @@ func (client *ApnsConn) StartListening() <-chan *ApnsFeedbackMessage {
 						log.Printf("Error closing the connection: %v", err)
 					}
 
-					log.Printf("Feedback: try reconnection in 30 sec")
-
 					time.Sleep(time.Second * 30)
 					err = client.connect()
 					if err != nil {
 						log.Print(err)
 					} else {
-						log.Printf("Feedback: reconnected")
 						client.tlsconn.SetReadDeadline(time.Time{}) //Do not timeout
 						buff_reader = bufio.NewReader(client.tlsconn)
 						break

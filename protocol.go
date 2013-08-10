@@ -1,7 +1,7 @@
 // Package apns provides primitived to communicate with the Apple Notification System.
 // http://developer.apple.com/library/mac/#documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Introduction/Introduction.html#//apple_ref/doc/uid/TP40008194-CH1-SW1
 
-// Inspired 
+// Inspired
 // from http://bravenewmethod.wordpress.com/2011/02/25/apple-push-notifications-with-go-language/
 
 package apns
@@ -19,18 +19,39 @@ import (
 	"time"
 )
 
-type ApnsConn struct {
+const APPLE_PUSH string = "gateway.push.apple.com:2196"
+const APPLE_PUSH_SANDBOX string = "gateway.sandbox.push.apple.com:2195"
+
+type Conn struct {
 	tlsconn          *tls.Conn
 	tls_cfg          tls.Config
 	endpoint         string
 	ReadTimeout      time.Duration
 	mu               sync.Mutex // Protecting the Apns Channel
 	transactionId    uint32     // keep transaction
-	MAX_PAYLOAD_SIZE int        // default to 256 as per Apple specifications (June 9 2012) 
+	MAX_PAYLOAD_SIZE int        // default to 256 as per Apple specifications (June 9 2012)
 	connected        bool
 }
 
-func (client *ApnsConn) connect() (err error) {
+type PayloadAlert struct {
+	Body         string   `json:"body,omitempty"`
+	ActionLocKey string   `json:"action-loc-key,omitempty"`
+	LocKey       string   `json:"loc-key,omitempty"`
+	LocArgs      []string `json:"loc-args,omitempty"`
+	LaunchImage  string   `json:"launch-image,omitempty"`
+}
+
+type PayloadNotification struct {
+	Alert PayloadAlert `json:"alert"`
+	Badge int          `json:"badge,omitempty"`
+	Sound string       `json:"sound,omitempty"`
+}
+
+type Payload struct {
+	Aps PayloadNotification `json:"aps"`
+}
+
+func (client *Conn) connect() (err error) {
 	if client.connected {
 		return nil
 	}
@@ -57,8 +78,8 @@ func (client *ApnsConn) connect() (err error) {
 }
 
 // NewClient creates a new apns connection. endpoint and certificate are paths
-// to the X.509 files. 
-func NewClient(endpoint, certificate, key string) (*ApnsConn, error) {
+// to the X.509 files.
+func NewClient(endpoint, certificate, key string) (*Conn, error) {
 
 	// load certificates and setup config
 	cert, err := tls.LoadX509KeyPair(certificate, key)
@@ -66,21 +87,21 @@ func NewClient(endpoint, certificate, key string) (*ApnsConn, error) {
 		return nil, err
 	}
 
-	apnsConn := &ApnsConn{
+	Conn := &Conn{
 		tlsconn: nil,
 		tls_cfg: tls.Config{
 			InsecureSkipVerify: true,
-			Certificates: []tls.Certificate{cert}},
+			Certificates:       []tls.Certificate{cert}},
 		endpoint:         endpoint,
 		ReadTimeout:      150 * time.Millisecond,
 		MAX_PAYLOAD_SIZE: 256,
 		connected:        false,
 	}
 
-	return apnsConn, nil
+	return Conn, nil
 }
 
-func (client *ApnsConn) shutdown() (err error) {
+func (client *Conn) shutdown() (err error) {
 	err = nil
 	if client.tlsconn != nil {
 		err = client.tlsconn.Close()
@@ -159,7 +180,7 @@ var errText = map[uint8]string{
 
 // SendPayloadString message to the specified device.
 // the token is the string found in the device and will converted to hex by the api
-func (client *ApnsConn) SendPayloadString(token string, payload []byte, expiration time.Duration) (err error) {
+func (client *Conn) SendPayloadString(token string, payload []byte, expiration time.Duration) (err error) {
 
 	btoken, err := hex.DecodeString(token)
 
@@ -171,11 +192,11 @@ func (client *ApnsConn) SendPayloadString(token string, payload []byte, expirati
 	return
 }
 
-// SendPayload message to the specified device. 
+// SendPayload message to the specified device.
 // The commands waits for a response for no more that client.ReadTimeout.
 // The method uses the same connection. If the connection is closed it tries to reopen it at the next
-// time. 
-func (client *ApnsConn) SendPayload(token, payload []byte, expiration time.Duration) (err error) {
+// time.
+func (client *Conn) SendPayload(token, payload []byte, expiration time.Duration) (err error) {
 
 	if len(payload) > client.MAX_PAYLOAD_SIZE {
 		return errors.New(fmt.Sprintf("The payload exceeds maximum allowed", client.MAX_PAYLOAD_SIZE))

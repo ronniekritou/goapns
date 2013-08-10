@@ -4,7 +4,6 @@ import (
 	"testing"
 )
 
-
 func Test_parseAppleFeedbackMessage(t *testing.T) {
 
 	msg, err := parseAppleFeedbackMessage([]byte{})
