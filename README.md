@@ -9,23 +9,23 @@ Apple Notification Service API written in GoLang (forked from github.com/Mistoba
         go get github.com/akhenakh/goapns
 
 # Usage
-		client = apns.NewClient(apns.APPLE_PUSH_SANDBOX, "apns-dev-cert.pem", "apns-dev-key-noenc.pem")
+		client, _ := apns.NewClient(apns.APPLE_PUSH_SANDBOX, "apns-dev-cert.pem", "apns-dev-key-noenc.pem")
 
 		alert := apns.PayloadAlert{
 			LocArgs:      []string{"kevin","taxes"},
 			ActionLocKey: "PLAY",
-			LocKey = "FOUND_W"
+			LocKey : "FOUND_W",
 		}
     
-		payloadNotif := apns.PayloadNotification{Alert: alert}
+		payloadNotif := apns.PayloadNotification{Alert: alert, Sound: "default"}
 
-		payload := apns.PayloadGame{Aps: payloadNotif}
+		payload := apns.Payload{Aps: payloadNotif}
 
 		payloadJSON, err := json.Marshal(payload)
 
 		client.SendPayloadString(token, payloadJSON, time.Duration(1) * time.Minute)
 
-		feedback = apns.NewFeedbackClient(apns.APPLE_FEEDBACK_SANDBOX, "apns-dev-cert.pem", "apns-dev-key-noenc.pem")
+		feedback := apns.NewFeedbackClient(apns.APPLE_FEEDBACK_SANDBOX, "apns-dev-cert.pem", "apns-dev-key-noenc.pem")
 		feedback.StartListening() listen for channel
 
 
