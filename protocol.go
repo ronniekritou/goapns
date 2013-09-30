@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-const APPLE_PUSH string = "gateway.push.apple.com:2196"
+const APPLE_PUSH string = "gateway.push.apple.com:2195"
 const APPLE_PUSH_SANDBOX string = "gateway.sandbox.push.apple.com:2195"
 
 type Conn struct {
