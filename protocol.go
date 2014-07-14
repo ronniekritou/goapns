@@ -48,6 +48,7 @@ type PayloadNotification struct {
 	Sound string       `json:"sound,omitempty"`
 	ContentAvailable int	`json:"content-available"`
 	Type	string	`json:"type"`
+	Sender string `json:"string"`
 }
 
 type Payload struct {
