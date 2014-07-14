@@ -39,6 +39,8 @@ type PayloadAlert struct {
 	LocKey       string   `json:"loc-key,omitempty"`
 	LocArgs      []string `json:"loc-args,omitempty"`
 	LaunchImage  string   `json:"launch-image,omitempty"`
+	ContentAvailable int	`json:"content-available"`
+	Type	string	`json:"type"`
 }
 
 type PayloadNotification struct {
